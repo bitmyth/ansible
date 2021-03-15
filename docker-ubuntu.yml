@@ -1,0 +1,60 @@
+---
+- name: install docker
+  hosts: dockers
+  remote_user: ubuntu
+
+  tasks:
+  - name: Run "apt-get update"
+    apt:
+      update_cache: yes
+    become: yes
+
+  - name: install tools
+    apt:
+      pkg:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - gnupg
+    become: yes
+
+  - name: Add Docker's official GPG key
+    ansible.builtin.shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    args:
+      executable: /bin/bash
+
+  - name: Set up repo
+    ansible.builtin.shell: echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    args:
+      executable: /bin/bash
+    become: yes
+
+  - name: Run "apt-get update"
+    apt:
+      update_cache: yes
+    become: yes
+
+  - name: ensure docker is at the latest version
+    apt:
+      pkg:
+        - docker-ce
+        - docker-ce-cli 
+        - containerd.io
+    become: yes
+
+  - name: ensure docker daemon can autostart
+    ansible.builtin.command: systemctl enable docker
+    become: yes
+    become_user: root
+
+  - name: ensure docker daemon is running
+    ansible.builtin.command: systemctl start docker
+    become: yes
+    become_user: root
+
+  - name: ensure user is in docker group
+    ansible.builtin.command: usermod -aG docker {{ ansible_ssh_user }}
+    become: yes
+
+  # - name: activatte docker group
+    # ansible.builtin.command: newgrp docker && exit
