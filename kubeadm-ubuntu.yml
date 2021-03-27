@@ -1,0 +1,48 @@
+---
+- name: install kubeadm
+  hosts: test
+  remote_user: ubuntu
+
+  tasks:
+  - name: Run "apt-get update"
+    apt:
+      update_cache: yes
+    become: yes
+
+  - name: install tools
+    apt:
+      pkg:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - gnupg
+    become: yes
+
+  - name: Download the Google Cloud public signing key
+    ansible.builtin.shell: sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    args:
+      executable: /bin/bash
+
+  - name: Add the Kubernetes apt repository
+    ansible.builtin.shell: echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+    args:
+      executable: /bin/bash
+    become: yes
+
+  - name: Run "apt-get update"
+    apt:
+      update_cache: yes
+    become: yes
+
+  - name: install kubelet, kubeadm and kubectl
+    apt:
+      pkg:
+        - kubelet
+        - kubeadm
+        - kubectl
+    become: yes
+
+  - name: pin their version
+    ansible.builtin.command: apt-mark hold kubelet kubeadm kubectl 
+    become: yes
+    become_user: root
