@@ -1,0 +1,8 @@
+---
+- name: install ingress nginx
+  hosts: test
+  remote_user: ubuntu
+
+  tasks:
+  - name: install ingress nginx
+    ansible.builtin.command:  kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.44.0/deploy/static/provider/baremetal/deploy.yaml

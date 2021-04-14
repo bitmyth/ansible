@@ -1,0 +1,33 @@
+---
+- name: install docker
+  hosts: dockers
+  remote_user: ec2-user
+
+  tasks:
+  - name: install yum-utils
+    yum:
+      name: yum-utils
+    become: yes
+
+  - name: add repo
+    ansible.builtin.command: yum-config-manager
+      --add-repo
+      https://download.docker.com/linux/centos/docker-ce.repo
+    become: yes
+
+  - name: ensure docker is at the latest version
+    yum:
+      name:
+        - docker-ce
+        - docker-ce-cli 
+        - containerd.io
+    become: yes
+
+  - name: ensure docker daemon is running
+    ansible.builtin.command: systemctl start docker
+    become: yes
+
+  - name: ensure user is in docker group
+    ansible.builtin.command: usermod -aG docker {{ ansible_ssh_user }}
+    become: yes
+    become_user: root
