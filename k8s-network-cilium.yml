@@ -1,0 +1,16 @@
+---
+- name: cilium
+  hosts: test
+  remote_user: root
+
+  tasks:
+    - name: Download cilium
+      ansible.builtin.shell: |
+        curl -L --remote-name-all https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz{,.sha256sum}
+        sha256sum --check cilium-linux-amd64.tar.gz.sha256sum
+        sudo tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
+        rm cilium-linux-amd64.tar.gz{,.sha256sum}
+
+    - name: Install cilium
+      ansible.builtin.shell: |
+        cilium install

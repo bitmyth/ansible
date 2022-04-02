@@ -1,0 +1,27 @@
+---
+- name: rbac
+  hosts: test
+  remote_user: root
+
+  tasks:
+    - name: wirte kubeconfig example
+      ansible.builtin.shell: |
+        cat <<EOF > /tmp/kubeconfigexample.yaml
+        apiVersion: kubeadm.k8s.io/v1beta3
+        kind: ClusterConfiguration
+        # Will be used as the target "cluster" in the kubeconfig
+        clusterName: "kubernetes"
+        # Will be used as the "server" (IP or DNS name) of this cluster in the kubeconfig
+        controlPlaneEndpoint: "some-dns-address:6443"
+        # The cluster CA key and certificate will be loaded from this local directory
+        certificatesDir: "/etc/kubernetes/pki"
+        EOF
+
+    - name: create kubeconfig file
+      ansible.builtin.shell: |
+        kubeadm kubeconfig user --config /tmp/kubeconfigexample.yaml --org dev --client-name gsh --validity-period 24h > /tmp/gsh.conf
+
+    - name: create ClusterRoleBinding
+      ansible.builtin.shell: |
+        kubectl create clusterrolebinding root-clusteradmin --clusterrole=cluster-admin --user gsh
+

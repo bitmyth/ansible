@@ -1,0 +1,23 @@
+---
+- name: kubeadm init
+  hosts: test
+  remote_user: root
+
+  tasks:
+    - name: kubeadm init
+      ansible.builtin.command: kubeadm init --pod-network-cidr=10.244.0.0/16  --control-plane-endpoint=8.210.248.156  #--config /home/ubuntu/cluster-configuration.yaml 
+      become: yes
+
+    - name: set kubeconfig
+      ansible.builtin.shell: |
+        mkdir -p $HOME/.kube
+        sudo cp  /etc/kubernetes/admin.conf $HOME/.kube/config
+        sudo chown $(id -u):$(id -g) $HOME/.kube/config
+      args:
+        executable: /bin/bash
+
+    - name: install flannel
+      ansible.builtin.command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
+    - name: taint nodes
+      ansible.builtin.command: kubectl taint nodes --all node-role.kubernetes.io/master-

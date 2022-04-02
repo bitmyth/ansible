@@ -1,0 +1,80 @@
+---
+- name: install docker
+  hosts: test
+  remote_user: root
+
+  tasks:
+  - name: Run "apt-get update"
+    apt:
+      update_cache: yes
+    become: yes
+
+  - name: install tools
+    apt:
+      pkg:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - gnupg
+    become: yes
+
+  - name: Add Docker's official GPG key
+    ansible.builtin.shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    args:
+      executable: /bin/bash
+      warn: false
+
+  - name: Set up repo
+    ansible.builtin.shell: echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    args:
+      executable: /bin/bash
+    become: yes
+
+  - name: Run "apt-get update"
+    apt:
+      update_cache: yes
+    become: yes
+
+  - name: ensure docker is at the latest version
+    apt:
+      pkg:
+        - docker-ce
+        - docker-ce-cli 
+        - containerd.io
+    become: yes
+
+  - name: set Docker cgroup driver to systemd
+    ansible.builtin.shell: |
+      cat <<EOF > /etc/docker/daemon.json
+      {
+        "exec-opts": ["native.cgroupdriver=systemd"],
+        "log-opts": {
+          "max-size": "100m"
+        },
+        "registry-mirrors": [
+          "https://docker.mirrors.ustc.edu.cn",
+          "https://registry.docker-cn.com",
+          "https://hub-mirror.c.163.com",
+          "https://docker.mirror.aliyuncs.com"
+        ]
+      }
+      EOF
+    args:
+      executable: /bin/bash
+    become: yes
+
+  - name: ensure docker daemon can autostart
+    ansible.builtin.command: systemctl enable docker
+    become: yes
+
+  - name: ensure docker daemon is running
+    ansible.builtin.command: systemctl restart docker
+    become: yes
+    become_user: root
+
+  - name: ensure user is in docker group
+    ansible.builtin.command: usermod -aG docker {{ ansible_ssh_user }}
+    become: yes
+
+  # - name: activatte docker group
+    # ansible.builtin.command: newgrp docker && exit

@@ -1,0 +1,57 @@
+---
+- name: install kubeadm
+  hosts: test
+  remote_user: root
+
+  tasks:
+    - name: Run "apt-get update"
+      apt:
+        update_cache: yes
+      become: yes
+
+    - name: install tools
+      apt:
+        pkg:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+      become: yes
+
+    - name: Download the Google Cloud public signing key
+      # https://docs.ansible.com/ansible/latest/collections/ansible/builtin/get_url_module.html
+      get_url:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        dest: /usr/share/keyrings/kubernetes-archive-keyring.gpg
+      become: yes
+
+    - name: Add the Kubernetes apt repository
+      ansible.builtin.shell: echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
+      args:
+        executable: /bin/bash
+      become: yes
+
+    - name: Run "apt-get update"
+      apt:
+        update_cache: yes
+      become: yes
+
+    - name: install kubelet, kubeadm and kubectl
+      apt:
+        pkg:
+          - kubelet
+          - kubeadm
+          - kubectl
+      become: yes
+
+    - name: pin their version
+      ansible.builtin.command: apt-mark hold kubelet kubeadm kubectl
+      become: yes
+
+    - name: enable kubectl autocompletion
+      ansible.builtin.shell: |
+        echo 'source <(kubectl completion bash)' >>~/.bashrc
+        echo 'alias k=kubectl' >>~/.bashrc
+        echo 'complete -F __start_kubectl k' >>~/.bashrc
+      args:
+        executable: /bin/bash

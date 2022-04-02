@@ -1,0 +1,23 @@
+---
+- name: kubeadm init
+  hosts: test
+  remote_user: root
+
+  tasks:
+    - name: kubeadm init
+      ansible.builtin.shell: |
+        kubeadm init \ 
+          --image-repository registry.cn-hangzhou.aliyuncs.com/google_containers \
+          --control-plane-endpoint=$(curl -s ifconfig.io)
+      become: yes
+
+    - name: set kubeconfig
+      ansible.builtin.shell: |
+        mkdir -p $HOME/.kube
+        sudo cp  /etc/kubernetes/admin.conf $HOME/.kube/config
+        sudo chown $(id -u):$(id -g) $HOME/.kube/config
+      args:
+        executable: /bin/bash
+
+    - name: taint nodes
+      ansible.builtin.command: kubectl taint nodes --all node-role.kubernetes.io/master-

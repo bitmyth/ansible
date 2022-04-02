@@ -1,0 +1,27 @@
+---
+- name: install docker
+  hosts: dockers
+  remote_user: ec2-user
+
+  tasks:
+  - name: ensure docker is at the latest version
+    yum:
+      name: docker
+      state: latest
+    become: yes
+    become_user: root
+
+  - name: ensure docker daemon is autostart
+    ansible.builtin.command: systemctl enable docker
+    become: yes
+    become_user: root
+
+  - name: ensure docker daemon is running
+    ansible.builtin.command: systemctl start docker
+    become: yes
+    become_user: root
+
+  - name: ensure user is in docker group
+    ansible.builtin.command: usermod -aG docker {{ ansible_ssh_user }}
+    become: yes
+    become_user: root
