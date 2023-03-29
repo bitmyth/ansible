@@ -1,7 +1,7 @@
 ---
 - name: install docker
   hosts: test
-  remote_user: root
+  remote_user: ubuntu
 
   tasks:
   - name: Run "apt-get update"
@@ -19,15 +19,10 @@
     become: yes
 
   - name: Add Docker's official GPG key
-    ansible.builtin.shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-    args:
-      executable: /bin/bash
-      warn: false
+    shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 
   - name: Set up repo
-    ansible.builtin.shell: echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-    args:
-      executable: /bin/bash
+    shell: echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
     become: yes
 
   - name: Run "apt-get update"
@@ -44,7 +39,7 @@
     become: yes
 
   - name: set Docker cgroup driver to systemd
-    ansible.builtin.shell: |
+    shell: |
       cat <<EOF > /etc/docker/daemon.json
       {
         "exec-opts": ["native.cgroupdriver=systemd"],
@@ -59,21 +54,19 @@
         ]
       }
       EOF
-    args:
-      executable: /bin/bash
     become: yes
 
   - name: ensure docker daemon can autostart
-    ansible.builtin.command: systemctl enable docker
+    command: systemctl enable docker
     become: yes
 
   - name: ensure docker daemon is running
-    ansible.builtin.command: systemctl restart docker
+    command: systemctl restart docker
     become: yes
     become_user: root
 
   - name: ensure user is in docker group
-    ansible.builtin.command: usermod -aG docker {{ ansible_ssh_user }}
+    command: usermod -aG docker {{ ansible_ssh_user }}
     become: yes
 
   # - name: activatte docker group
