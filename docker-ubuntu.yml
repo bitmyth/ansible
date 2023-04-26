@@ -38,6 +38,12 @@
         - containerd.io
     become: yes
 
+  - name: install docker compose
+    apt:
+      pkg:
+        - docker-compose-plugin
+    become: yes
+
   - name: set Docker cgroup driver to systemd
     shell: |
       cat <<EOF > /etc/docker/daemon.json
